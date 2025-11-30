@@ -1,18 +1,13 @@
 <?php
-define("PATH", "/srv/privatebin/");
-require PATH . "lib/Configuration.php";
-require PATH . "lib/Data/AbstractData.php";
-require PATH . "lib/Data/Filesystem.php";
-
+// Simplified metrics endpoint that doesn't require PrivateBin classes
 header("Content-Type: text/plain; version=0.0.4");
 
-// Initialize data storage
-$config = new PrivateBin\Configuration;
+// Data directory is always at /srv/privatebin/data
+$dataDir = "/srv/privatebin/data";
 
-// Get the actual data directory from config
-$dataDir = PATH . "data";
-if (isset($config['model_options']['dir'])) {
-    $dataDir = $config['model_options']['dir'];
+// Debug: Check if directory is readable
+if (!is_readable($dataDir)) {
+    error_log("metrics.php: data directory not readable: " . $dataDir);
 }
 
 $stats = array(
@@ -28,70 +23,88 @@ $totalSize = 0;
 $fileCount = 0;
 
 if (is_dir($dataDir)) {
-    // PrivateBin stores files in 2-character subdirectories
-    $dirs = @scandir($dataDir);
-    if ($dirs === false) {
-        $dirs = array();
+    // PrivateBin stores files in nested 2-character subdirectories (e.g., data/00/4d/004d177052bb2da7.php)
+    $level1Dirs = @scandir($dataDir);
+    if ($level1Dirs === false) {
+        $level1Dirs = array();
     }
-    foreach ($dirs as $dir) {
-        if ($dir === '.' || $dir === '..' || $dir === '.htaccess') continue;
+    
+    foreach ($level1Dirs as $level1) {
+        if ($level1 === '.' || $level1 === '..' || $level1 === '.htaccess') continue;
         
-        $subDir = $dataDir . DIRECTORY_SEPARATOR . $dir;
-        if (!is_dir($subDir)) continue;
+        $level1Path = $dataDir . DIRECTORY_SEPARATOR . $level1;
+        if (!is_dir($level1Path)) continue;
         
-        $files = @scandir($subDir);
-        if ($files === false) {
-            continue;
-        }
-        foreach ($files as $file) {
-            if ($file === '.' || $file === '..' || $file === '.htaccess') continue;
+        // Scan second level directories
+        $level2Dirs = @scandir($level1Path);
+        if ($level2Dirs === false) continue;
+        
+        foreach ($level2Dirs as $level2) {
+            if ($level2 === '.' || $level2 === '..' || $level2 === '.htaccess') continue;
             
-            $filePath = $subDir . DIRECTORY_SEPARATOR . $file;
-            if (!is_file($filePath)) continue;
+            $level2Path = $level1Path . DIRECTORY_SEPARATOR . $level2;
+            if (!is_dir($level2Path)) continue;
             
-            $stats['total']++;
-            $fileSize = @filesize($filePath);
-            if ($fileSize !== false) {
-                $totalSize += $fileSize;
-            }
-            $fileCount++;
+            // Scan files in the deepest level
+            $files = @scandir($level2Path);
+            if ($files === false) continue;
             
-            // Read paste metadata
-            $content = @file_get_contents($filePath);
-            if ($content === false) {
-                continue;
-            }
-            $data = json_decode($content, true);
-            if ($data && is_array($data)) {
-                // Check if expired
-                if (isset($data['meta']['expire_date'])) {
-                    if ($data['meta']['expire_date'] < time()) {
-                        $stats['expired']++;
-                    }
+            foreach ($files as $file) {
+                if ($file === '.' || $file === '..' || $file === '.htaccess') continue;
+                
+                $filePath = $level2Path . DIRECTORY_SEPARATOR . $file;
+                if (!is_file($filePath)) continue;
+                
+                $stats['total']++;
+                $fileSize = @filesize($filePath);
+                if ($fileSize !== false) {
+                    $totalSize += $fileSize;
+                }
+                $fileCount++;
+                
+                // Read paste metadata
+                $content = @file_get_contents($filePath);
+                if ($content === false) {
+                    continue;
                 }
                 
-                // Check burn after reading
-                if (isset($data['meta']['burnafterreading']) && $data['meta']['burnafterreading']) {
-                    $stats['burnafterreading']++;
-                }
-                
-                // Check for discussions
-                if (isset($data['meta']['opendiscussion']) && $data['meta']['opendiscussion']) {
-                    $stats['discussions']++;
-                }
-                
-                // Check format
-                if (isset($data['meta']['formatter'])) {
-                    switch ($data['meta']['formatter']) {
-                        case 'plaintext':
-                            $stats['plaintextpaste']++;
-                            break;
-                        case 'syntaxhighlighting':
-                            $stats['codepaste']++;
-                            break;
-                        case 'markdown':
-                            $stats['markdownpaste']++;
-                            break;
+                // Extract JSON from PHP file (format: <?php http_response_code(403); /* JSON */ )
+                if (preg_match('/\/\*\s*(\{.*\})\s*$/', $content, $matches)) {
+                    $data = json_decode($matches[1], true);
+                    if ($data && is_array($data) && isset($data['meta'])) {
+                        $meta = $data['meta'];
+                        
+                        // Check if expired
+                        if (isset($meta['expire_date'])) {
+                            if ($meta['expire_date'] < time()) {
+                                $stats['expired']++;
+                            }
+                        }
+                        
+                        // Check burn after reading - stored in adata array
+                        if (isset($data['adata']) && is_array($data['adata'])) {
+                            // adata format: [encryption_params, formatter, opendiscussion, burnafterreading]
+                            if (isset($data['adata'][2]) && $data['adata'][2]) {
+                                $stats['discussions']++;
+                            }
+                            if (isset($data['adata'][3]) && $data['adata'][3]) {
+                                $stats['burnafterreading']++;
+                            }
+                            // Formatter is in adata[1]
+                            if (isset($data['adata'][1])) {
+                                switch ($data['adata'][1]) {
+                                    case 'plaintext':
+                                        $stats['plaintextpaste']++;
+                                        break;
+                                    case 'syntaxhighlighting':
+                                        $stats['codepaste']++;
+                                        break;
+                                    case 'markdown':
+                                        $stats['markdownpaste']++;
+                                        break;
+                                }
+                            }
+                        }
                     }
                 }
             }
