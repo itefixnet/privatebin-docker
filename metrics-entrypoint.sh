@@ -8,7 +8,7 @@ if [ -n "$METRICS_ALLOWED_IPS" ]; then
     Require ip $METRICS_ALLOWED_IPS 127.0.0.1
 </Location>
 EOF
-    a2enconf metrics-access
+    a2enconf metrics-access > /dev/null 2>&1
 else
     # If no IPs specified, deny all access to metrics
     cat > /etc/apache2/conf-available/metrics-access.conf <<EOF
@@ -17,7 +17,7 @@ else
     Require all denied
 </Location>
 EOF
-    a2enconf metrics-access
+    a2enconf metrics-access > /dev/null 2>&1
 fi
 
 # Start Apache
