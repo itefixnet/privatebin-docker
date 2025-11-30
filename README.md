@@ -5,11 +5,10 @@ A Docker container running PrivateBin with Apache web server.
 ## Features
 
 - **Apache 2.4** with PHP 8.2
-- **PrivateBin** latest stable version (1.7.4)
+- **PrivateBin** version 2.0.3
 - Security headers configured
 - Data persistence with Docker volumes
-- Easy configuration through environment files
-- Health checks included
+- Configuration and data mounted as volumes
 
 ## Quick Start
 
@@ -19,40 +18,58 @@ A Docker container running PrivateBin with Apache web server.
 # Build the image
 docker build -t privatebin-apache .
 
-# Run with Docker
-docker run -d -p 8080:80 --name privatebin privatebin-apache
-
-# Or use Docker Compose
-docker-compose up -d
+# Run with Docker (with volume mounts)
+docker run -d -p 8080:80 \
+  -v ./data:/var/www/html/data \
+  -v ./cfg:/var/www/html/cfg \
+  --name privatebin privatebin-apache
 ```
 
 Access PrivateBin at: `http://localhost:8080`
 
 ## Configuration
 
-### Custom PrivateBin Configuration
+### Volume Mounts
 
-Edit `conf.php` to customize PrivateBin settings before building the image, or mount it as a volume:
-
-```yaml
-volumes:
-  - ./conf.php:/var/www/html/cfg/conf.php:ro
-```
-
-### Data Persistence
-
-Data is stored in the `data/` directory. Make sure it's writable:
+Both configuration and data directories must be mounted as volumes:
 
 ```bash
-mkdir -p data
+# Create directories
+mkdir -p data cfg
+
+# Copy sample configuration
+cp conf.php cfg/conf.php
+
+# Set permissions
 chmod 770 data
+chmod 755 cfg
+chmod 644 cfg/conf.php
+```
+
+Then mount them when running:
+
+```bash
+docker run -d -p 8080:80 \
+  -v ./data:/var/www/html/data \
+  -v ./cfg:/var/www/html/cfg \
+  --name privatebin privatebin-apache
 ```
 
 ### Environment Variables
 
-Customize the container by setting environment variables in `docker-compose.yml`:
+Customize the container by setting environment variables:
 
 - `TZ`: Timezone (default: UTC)
+
+Example:
+
+```bash
+docker run -d -p 8080:80 \
+  -e TZ=America/New_York \
+  -v ./data:/var/www/html/data \
+  -v ./cfg:/var/www/html/cfg \
+  --name privatebin privatebin-apache
+```
 
 ### Apache Configuration
 
@@ -72,25 +89,39 @@ docker build -t privatebin-apache .
 ### Specify PrivateBin Version
 
 ```bash
-docker build --build-arg PRIVATEBIN_VERSION=1.7.4 -t privatebin-apache .
+docker build --build-arg PRIVATEBIN_VERSION=2.0.3 -t privatebin-apache .
 ```
 
-## Docker Compose
+## Docker Management
 
-The included `docker-compose.yml` provides a complete setup:
+### Start the container
 
 ```bash
-# Start
-docker-compose up -d
+docker start privatebin
+```
 
-# Stop
-docker-compose down
+### Stop the container
 
-# View logs
-docker-compose logs -f
+```bash
+docker stop privatebin
+```
 
-# Rebuild
-docker-compose up -d --build
+### View logs
+
+```bash
+docker logs -f privatebin
+```
+
+### Rebuild and restart
+
+```bash
+docker stop privatebin
+docker rm privatebin
+docker build -t privatebin-apache .
+docker run -d -p 8080:80 \
+  -v ./data:/var/www/html/data \
+  -v ./cfg:/var/www/html/cfg \
+  --name privatebin privatebin-apache
 ```
 
 ## Security Considerations
@@ -104,27 +135,21 @@ docker-compose up -d --build
 
 For production, use a reverse proxy with HTTPS:
 
-```yaml
-version: '3.8'
+```bash
+# Run with restart policy and custom network
+docker network create proxy
 
-services:
-  privatebin:
-    build: .
-    container_name: privatebin-apache
-    volumes:
-      - ./data:/var/www/html/data
-    environment:
-      - TZ=America/New_York
-    restart: unless-stopped
-    networks:
-      - proxy
-
-networks:
-  proxy:
-    external: true
+docker run -d \
+  --name privatebin-apache \
+  --restart unless-stopped \
+  --network proxy \
+  -e TZ=America/New_York \
+  -v ./data:/var/www/html/data \
+  -v ./cfg:/var/www/html/cfg \
+  privatebin-apache
 ```
 
-Then configure your reverse proxy (nginx, Traefik, etc.) to handle HTTPS.
+Then configure your reverse proxy (nginx, Traefik, Caddy, etc.) to handle HTTPS and forward to the container.
 
 ## Troubleshooting
 
@@ -139,9 +164,9 @@ chmod 770 data/
 ### Check Logs
 
 ```bash
-docker logs privatebin-apache
-# or
-docker-compose logs -f
+docker logs privatebin
+# or follow logs
+docker logs -f privatebin
 ```
 
 ### Verify Apache Configuration
