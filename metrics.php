@@ -1,8 +1,9 @@
 <?php
 define("PATH", "/srv/privatebin/");
-require PATH . "lib/Controller.php";
+require PATH . "lib/Configuration.php";
 require PATH . "lib/Data/AbstractData.php";
 require PATH . "lib/Data/Filesystem.php";
+require PATH . "lib/Model/AbstractModel.php";
 require PATH . "lib/Model.php";
 require PATH . "lib/Model/Paste.php";
 
