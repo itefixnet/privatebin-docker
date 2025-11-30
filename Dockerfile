@@ -9,10 +9,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
     && a2enmod rewrite headers env dir mime \
+    && mkdir -p /tmp/privatebin \
     && curl -fsSL https://github.com/PrivateBin/PrivateBin/archive/${PRIVATEBIN_VERSION}.tar.gz | tar xz --strip-components=1 -C /tmp/privatebin \
     && mkdir -p /srv/privatebin /var/www/html \
-    && mv /tmp/privatebin/bin /tmp/privatebin/cfg /tmp/privatebin/data /tmp/privatebin/lib /tmp/privatebin/tpl /tmp/privatebin/vendor /srv/privatebin/ \
-    && mv /tmp/privatebin/* /var/www/html/ \
+    && mv /tmp/privatebin/bin /tmp/privatebin/cfg /tmp/privatebin/lib /tmp/privatebin/tpl /tmp/privatebin/vendor /srv/privatebin/ \
+    && mkdir -p /srv/privatebin/data \
+    && cp -r /tmp/privatebin/* /var/www/html/ 2>/dev/null || true \
     && rm -rf /tmp/privatebin \
     && sed -i "s|define('PATH', '');|define('PATH', '/srv/privatebin/');|" /var/www/html/index.php \
     && chown -R www-data:www-data /var/www/html /srv/privatebin \
