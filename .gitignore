@@ -1,0 +1,13 @@
+# Data directory
+data/
+
+# Environment files
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
