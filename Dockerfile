@@ -8,6 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
+    && apt-get install -y --no-install-recommends \
+    libfreetype6 \
+    libjpeg62-turbo \
+    libpng16-16 \
     && a2enmod rewrite headers env dir mime \
     && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
     && mkdir -p /tmp/privatebin \
