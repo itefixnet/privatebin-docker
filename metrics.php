@@ -25,14 +25,22 @@ $totalSize = 0;
 $fileCount = 0;
 
 if (is_dir($dataDir)) {
-    $dirs = scandir($dataDir);
+    $dirs = @scandir($dataDir);
+    if ($dirs === false) {
+        // Permission denied or directory not accessible
+        $dirs = array();
+    }
     foreach ($dirs as $dir) {
         if ($dir === '.' || $dir === '..') continue;
         
         $subDir = $dataDir . DIRECTORY_SEPARATOR . $dir;
         if (!is_dir($subDir)) continue;
         
-        $files = scandir($subDir);
+        $files = @scandir($subDir);
+        if ($files === false) {
+            // Permission denied or directory not accessible
+            continue;
+        }
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') continue;
             
@@ -40,11 +48,18 @@ if (is_dir($dataDir)) {
             if (!is_file($filePath)) continue;
             
             $stats['total']++;
-            $totalSize += filesize($filePath);
+            $fileSize = @filesize($filePath);
+            if ($fileSize !== false) {
+                $totalSize += $fileSize;
+            }
             $fileCount++;
             
             // Read paste metadata
-            $data = json_decode(file_get_contents($filePath), true);
+            $content = @file_get_contents($filePath);
+            if ($content === false) {
+                continue;
+            }
+            $data = json_decode($content, true);
             if ($data && is_array($data)) {
                 // Check if expired
                 if (isset($data['meta']['expire_date'])) {

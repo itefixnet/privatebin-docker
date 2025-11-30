@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/privatebin \
     && sed -i "s|define('PATH', '');|define('PATH', '/srv/privatebin/');|" /var/www/html/index.php \
     && chown -R www-data:www-data /var/www/html /srv/privatebin \
+    && chmod -R 755 /srv/privatebin \
     && apt-get purge -y --auto-remove libfreetype6-dev libjpeg62-turbo-dev libpng-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
