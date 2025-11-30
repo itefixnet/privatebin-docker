@@ -33,11 +33,19 @@ WORKDIR /var/www/html
 # Copy custom Apache configuration
 COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
 
+# Copy Prometheus metrics endpoint
+COPY metrics.php /var/www/html/metrics.php
+RUN chown www-data:www-data /var/www/html/metrics.php
+
+# Copy entrypoint script for metrics access control
+COPY metrics-entrypoint.sh /usr/local/bin/metrics-entrypoint.sh
+RUN chmod +x /usr/local/bin/metrics-entrypoint.sh
+
 # Create volume mount point for data only
 VOLUME ["/srv/privatebin/data"]
 
 # Expose port 80
 EXPOSE 80
 
-# Start Apache
-CMD ["apache2-foreground"]
+# Start Apache with metrics access control
+CMD ["/usr/local/bin/metrics-entrypoint.sh"]
