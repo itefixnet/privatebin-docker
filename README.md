@@ -4,8 +4,10 @@ A Docker container running PrivateBin with Apache web server.
 
 ## Features
 
-- **Apache 2.4** with PHP 8.2
+- **Apache 2.4** with PHP 8.2 (Debian-based)
 - **PrivateBin** version 2.0.3
+- Optimized image size (~450-500MB)
+- Secure setup with sensitive directories outside document root (`/srv/privatebin`)
 - Security headers configured
 - Data persistence with Docker volumes
 - Configuration and data mounted as volumes
@@ -20,8 +22,8 @@ docker build -t privatebin-apache .
 
 # Run with Docker (with volume mounts)
 docker run -d -p 8080:80 \
-  -v ./data:/var/www/html/data \
-  -v ./cfg:/var/www/html/cfg \
+  -v ./data:/srv/privatebin/data \
+  -v ./conf.php:/srv/privatebin/cfg/conf.php:ro \
   --name privatebin privatebin-apache
 ```
 
@@ -31,27 +33,34 @@ Access PrivateBin at: `http://localhost:8080`
 
 ### Volume Mounts
 
-Both configuration and data directories must be mounted as volumes:
+The data directory must be mounted as a volume. Optionally mount a custom `conf.php`:
 
 ```bash
-# Create directories
-mkdir -p data cfg
+# Create data directory
+mkdir -p data
 
-# Copy sample configuration
-cp conf.php cfg/conf.php
+# Copy sample configuration (optional)
+cp conf.php my-conf.php
+# Edit my-conf.php as needed
 
 # Set permissions
 chmod 770 data
-chmod 755 cfg
-chmod 644 cfg/conf.php
 ```
 
 Then mount them when running:
 
 ```bash
 docker run -d -p 8080:80 \
-  -v ./data:/var/www/html/data \
-  -v ./cfg:/var/www/html/cfg \
+  -v ./data:/srv/privatebin/data \
+  -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
+  --name privatebin privatebin-apache
+```
+
+Or run without custom config to use defaults:
+
+```bash
+docker run -d -p 8080:80 \
+  -v ./data:/srv/privatebin/data \
   --name privatebin privatebin-apache
 ```
 
@@ -66,8 +75,8 @@ Example:
 ```bash
 docker run -d -p 8080:80 \
   -e TZ=America/New_York \
-  -v ./data:/var/www/html/data \
-  -v ./cfg:/var/www/html/cfg \
+  -v ./data:/srv/privatebin/data \
+  -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
   --name privatebin privatebin-apache
 ```
 
@@ -119,8 +128,8 @@ docker stop privatebin
 docker rm privatebin
 docker build -t privatebin-apache .
 docker run -d -p 8080:80 \
-  -v ./data:/var/www/html/data \
-  -v ./cfg:/var/www/html/cfg \
+  -v ./data:/srv/privatebin/data \
+  -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
   --name privatebin privatebin-apache
 ```
 
@@ -144,8 +153,8 @@ docker run -d \
   --restart unless-stopped \
   --network proxy \
   -e TZ=America/New_York \
-  -v ./data:/var/www/html/data \
-  -v ./cfg:/var/www/html/cfg \
+  -v ./data:/srv/privatebin/data \
+  -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
   privatebin-apache
 ```
 
