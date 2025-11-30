@@ -8,10 +8,13 @@ header("Content-Type: text/plain; version=0.0.4");
 
 // Initialize data storage
 $config = new PrivateBin\Configuration;
-$store = new PrivateBin\Data\Filesystem(array("dir" => PATH . "data"));
 
-// Get paste statistics by scanning the data directory
+// Get the actual data directory from config
 $dataDir = PATH . "data";
+if (isset($config['model_options']['dir'])) {
+    $dataDir = $config['model_options']['dir'];
+}
+
 $stats = array(
     'total' => 0,
     'expired' => 0,
@@ -25,24 +28,23 @@ $totalSize = 0;
 $fileCount = 0;
 
 if (is_dir($dataDir)) {
+    // PrivateBin stores files in 2-character subdirectories
     $dirs = @scandir($dataDir);
     if ($dirs === false) {
-        // Permission denied or directory not accessible
         $dirs = array();
     }
     foreach ($dirs as $dir) {
-        if ($dir === '.' || $dir === '..') continue;
+        if ($dir === '.' || $dir === '..' || $dir === '.htaccess') continue;
         
         $subDir = $dataDir . DIRECTORY_SEPARATOR . $dir;
         if (!is_dir($subDir)) continue;
         
         $files = @scandir($subDir);
         if ($files === false) {
-            // Permission denied or directory not accessible
             continue;
         }
         foreach ($files as $file) {
-            if ($file === '.' || $file === '..') continue;
+            if ($file === '.' || $file === '..' || $file === '.htaccess') continue;
             
             $filePath = $subDir . DIRECTORY_SEPARATOR . $file;
             if (!is_file($filePath)) continue;
