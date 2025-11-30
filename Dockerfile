@@ -1,30 +1,28 @@
-FROM php:8.2-apache
+FROM php:8.2-apache-alpine
 
-# Install required PHP extensions and dependencies
-RUN apt-get update && apt-get install -y \
-    libgd-dev \
-    libfreetype6-dev \
-    libjpeg62-turbo-dev \
+# Install PHP extensions and download PrivateBin in a single layer
+ARG PRIVATEBIN_VERSION=2.0.3
+RUN apk add --no-cache --virtual .build-deps \
+    freetype-dev \
+    libjpeg-turbo-dev \
     libpng-dev \
-    zlib1g-dev \
-    git \
-    unzip \
+    && apk add --no-cache \
+    freetype \
+    libjpeg-turbo \
+    libpng \
+    curl \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Enable Apache modules
-RUN a2enmod rewrite headers env dir mime
+    && a2enmod rewrite headers env dir mime \
+    && curl -fsSL https://github.com/PrivateBin/PrivateBin/archive/${PRIVATEBIN_VERSION}.tar.gz | tar xz --strip-components=1 -C /var/www/html \
+    && cd /var/www/html \
+    && rm -rf .git* .dockerignore .scrutinizer.yml .styleci.yml .travis.yml phpunit.xml Dockerfile doc tst \
+    && chown -R www-data:www-data /var/www/html \
+    && apk del .build-deps \
+    && rm -rf /tmp/* /var/tmp/*
 
 # Set working directory
 WORKDIR /var/www/html
-
-# Download and install PrivateBin
-ARG PRIVATEBIN_VERSION=2.0.3
-RUN curl -L https://github.com/PrivateBin/PrivateBin/archive/${PRIVATEBIN_VERSION}.tar.gz | tar xz --strip-components=1 \
-    && rm -rf .git* .dockerignore .scrutinizer.yml .styleci.yml .travis.yml phpunit.xml Dockerfile \
-    && chown -R www-data:www-data /var/www/html
 
 # Copy custom Apache configuration
 COPY apache-config.conf /etc/apache2/sites-available/000-default.conf
