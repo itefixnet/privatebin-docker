@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) gd \
     && a2enmod rewrite headers env dir mime \
+    && echo "ServerName localhost" >> /etc/apache2/apache2.conf \
     && mkdir -p /tmp/privatebin \
     && curl -fsSL https://github.com/PrivateBin/PrivateBin/archive/${PRIVATEBIN_VERSION}.tar.gz | tar xz --strip-components=1 -C /tmp/privatebin \
     && mkdir -p /srv/privatebin /var/www/html \
