@@ -15,7 +15,20 @@ A secure Docker container running PrivateBin with Apache web server, featuring P
 
 ## Quick Start
 
-### Build and Run
+### Using Pre-built Image from Docker Hub
+
+```bash
+# Pull the image
+docker pull itefixnet/privatebin
+
+# Run with Docker (with volume mounts)
+docker run -d -p 8080:80 \
+  -v ./data:/srv/privatebin/data \
+  -v ./conf.php:/srv/privatebin/cfg/conf.php:ro \
+  --name privatebin itefixnet/privatebin
+```
+
+### Build and Run Locally
 
 ```bash
 # Build the image
@@ -60,6 +73,12 @@ docker run -d -p 8080:80 \
 Or run without custom config to use defaults:
 
 ```bash
+# Using Docker Hub image
+docker run -d -p 8080:80 \
+  -v ./data:/srv/privatebin/data \
+  --name privatebin itefixnet/privatebin
+
+# Or using locally built image
 docker run -d -p 8080:80 \
   -v ./data:/srv/privatebin/data \
   --name privatebin privatebin-apache
@@ -80,7 +99,7 @@ docker run -d -p 8080:80 \
   -e METRICS_ALLOWED_IPS="10.0.1.5 192.168.1.10" \
   -v ./data:/srv/privatebin/data \
   -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
-  --name privatebin privatebin-apache
+  --name privatebin itefixnet/privatebin
 ```
 
 ### Apache Configuration
@@ -166,7 +185,7 @@ The metrics endpoint is protected by IP whitelist. Configure allowed IPs using t
 docker run -d -p 8080:80 \
   -e METRICS_ALLOWED_IPS="10.0.1.5 192.168.1.100" \
   -v ./data:/srv/privatebin/data \
-  --name privatebin privatebin-apache
+  --name privatebin itefixnet/privatebin
 ```
 
 **Note:** Localhost (127.0.0.1) is always allowed. If `METRICS_ALLOWED_IPS` is not set, the metrics endpoint will be denied to all external requests.
@@ -214,14 +233,14 @@ For production, use a reverse proxy with HTTPS:
 docker network create proxy
 
 docker run -d \
-  --name privatebin-apache \
+  --name privatebin \
   --restart unless-stopped \
   --network proxy \
   -e TZ=America/New_York \
   -e METRICS_ALLOWED_IPS="10.0.1.5" \
   -v ./data:/srv/privatebin/data \
   -v ./my-conf.php:/srv/privatebin/cfg/conf.php:ro \
-  privatebin-apache
+  itefixnet/privatebin
 ```
 
 Then configure your reverse proxy (nginx, Traefik, Caddy, etc.) to handle HTTPS and forward to the container.
@@ -258,6 +277,7 @@ PrivateBin itself is licensed under the Zlib/libpng license. See the [PrivateBin
 
 ## Resources
 
+- [Docker Hub](https://hub.docker.com/r/itefixnet/privatebin)
 - [PrivateBin Official Site](https://privatebin.info/)
 - [PrivateBin GitHub](https://github.com/PrivateBin/PrivateBin)
 - [PrivateBin Documentation](https://github.com/PrivateBin/PrivateBin/wiki)
