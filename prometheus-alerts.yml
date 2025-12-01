@@ -1,0 +1,127 @@
+groups:
+  - name: privatebin_alerts
+    interval: 30s
+    rules:
+      # Storage Alerts
+      - alert: PrivateBinHighStorageUsage
+        expr: privatebin_storage_bytes > 10737418240  # 10GB
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PrivateBin storage usage is high"
+          description: "Storage usage is {{ $value | humanize }}B (threshold: 10GB). Consider cleaning up expired pastes or increasing storage capacity."
+
+      - alert: PrivateBinCriticalStorageUsage
+        expr: privatebin_storage_bytes > 21474836480  # 20GB
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PrivateBin storage usage is critical"
+          description: "Storage usage is {{ $value | humanize }}B (threshold: 20GB). Immediate action required to prevent service disruption."
+
+      - alert: PrivateBinStorageGrowthRateHigh
+        expr: rate(privatebin_storage_bytes[1h]) * 86400 > 1073741824  # 1GB/day growth
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PrivateBin storage growing rapidly"
+          description: "Storage is growing at {{ $value | humanize }}B per day. Current usage: {{ query \"privatebin_storage_bytes\" | first | value | humanize }}B."
+
+      # Paste Volume Alerts
+      - alert: PrivateBinHighPasteRate
+        expr: rate(privatebin_pastes_total[5m]) > 10  # More than 10 pastes per second
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PrivateBin experiencing high paste rate"
+          description: "Paste rate is {{ $value | humanize1024 }} pastes/second over the last 5 minutes. This may indicate unusual activity or abuse."
+
+      - alert: PrivateBinPasteRateSpike
+        expr: rate(privatebin_pastes_total[5m]) > 50  # More than 50 pastes per second
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PrivateBin paste rate spike detected"
+          description: "Paste rate is {{ $value | humanize1024 }} pastes/second. Possible abuse or attack in progress."
+
+      - alert: PrivateBinNoPasteActivity
+        expr: rate(privatebin_pastes_total[24h]) == 0
+        for: 24h
+        labels:
+          severity: info
+        annotations:
+          summary: "PrivateBin has no paste activity"
+          description: "No new pastes have been created in the last 24 hours. Service may be unavailable or unreachable."
+
+      # File System Alerts
+      - alert: PrivateBinHighFileCount
+        expr: privatebin_storage_files > 100000  # 100k files
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PrivateBin has high file count"
+          description: "Data directory contains {{ $value }} files (threshold: 100k). Consider reviewing retention policies or file system performance."
+
+      - alert: PrivateBinAverageFileSizeAnomalous
+        expr: privatebin_storage_average_file_bytes > 1048576  # 1MB average
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "PrivateBin average file size is unusually high"
+          description: "Average file size is {{ $value | humanize }}B. Normal pastes are typically much smaller. May indicate misuse or large data uploads."
+
+      # Expired Pastes Alerts
+      - alert: PrivateBinHighExpiredPasteRatio
+        expr: (privatebin_pastes_expired / privatebin_pastes_total) > 0.8
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "High ratio of expired pastes"
+          description: "{{ $value | humanizePercentage }} of pastes are expired. Consider running cleanup to free storage space."
+
+      # Burn After Reading Alerts
+      - alert: PrivateBinHighBurnAfterReadingUsage
+        expr: (privatebin_pastes_burn_after_reading / privatebin_pastes_total) > 0.5
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "High usage of burn-after-reading feature"
+          description: "{{ $value | humanizePercentage }} of pastes use burn-after-reading. This is informational."
+
+      # Service Health Alerts
+      - alert: PrivateBinMetricsDown
+        expr: up{job="privatebin"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PrivateBin metrics endpoint is down"
+          description: "Cannot scrape metrics from PrivateBin instance. Service may be down or unreachable."
+
+      - alert: PrivateBinMetricsStale
+        expr: time() - privatebin_pastes_total > 3600  # Metric hasn't updated in 1 hour
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PrivateBin metrics appear stale"
+          description: "Metrics have not been updated recently. Check if the service is running properly."
+
+      # Storage Capacity Planning
+      - alert: PrivateBinStorageCapacityPrediction
+        expr: predict_linear(privatebin_storage_bytes[7d], 30 * 86400) > 53687091200  # Will exceed 50GB in 30 days
+        for: 1h
+        labels:
+          severity: info
+        annotations:
+          summary: "PrivateBin storage capacity planning alert"
+          description: "Based on 7-day trend, storage will reach {{ $value | humanize }}B in 30 days. Current: {{ query \"privatebin_storage_bytes\" | first | value | humanize }}B. Plan for capacity expansion."

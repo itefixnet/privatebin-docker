@@ -119,9 +119,13 @@ docker build -t privatebin-apache .
 
 ### Specify PrivateBin Version
 
+You can build with a specific PrivateBin version using the `PRIVATEBIN_VERSION` build argument:
+
 ```bash
 docker build --build-arg PRIVATEBIN_VERSION=2.0.3 -t privatebin-apache .
 ```
+
+Available versions can be found at: https://github.com/PrivateBin/PrivateBin/releases
 
 ## Docker Management
 
