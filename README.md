@@ -205,6 +205,8 @@ scrape_configs:
 
 ### Grafana Dashboard
 
+![Grafana Dashboard](grafana-dashboard-privatebin.png)
+
 A pre-built Grafana dashboard is available in `grafana-dashboard.json`. Import it into Grafana to visualize:
 - Paste trends and statistics
 - Storage usage and growth
