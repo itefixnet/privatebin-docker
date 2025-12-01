@@ -1,6 +1,6 @@
-# PrivateBin Docker - Apache
+# PrivateBin Docker
 
-A Docker container running PrivateBin with Apache web server.
+A secure Docker container running PrivateBin with Apache web server, featuring Prometheus metrics, data persistence, and optimized configuration for production deployments.
 
 ## Features
 
