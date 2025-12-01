@@ -252,7 +252,9 @@ docker exec privatebin-apache apache2ctl -t
 
 ## License
 
-PrivateBin is licensed under the Zlib/libpng license. See the [PrivateBin repository](https://github.com/PrivateBin/PrivateBin) for details.
+This project is licensed under the BSD 2-Clause License - see the [LICENSE](LICENSE) file for details.
+
+PrivateBin itself is licensed under the Zlib/libpng license. See the [PrivateBin repository](https://github.com/PrivateBin/PrivateBin) for details.
 
 ## Resources
 
