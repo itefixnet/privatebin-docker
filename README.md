@@ -207,6 +207,33 @@ scrape_configs:
     scrape_interval: 30s
 ```
 
+### Prometheus Alert Rules
+
+A comprehensive set of alert rules is available in `prometheus-alerts.yml`. Import these rules into your Prometheus configuration to monitor:
+
+**Storage Alerts:**
+- High storage usage warnings (>10GB) and critical alerts (>20GB)
+- Rapid storage growth rate detection (>1GB/day)
+- Storage capacity forecasting (30-day prediction)
+
+**Paste Volume Alerts:**
+- High paste rate detection (potential abuse)
+- No paste activity monitoring
+- Expired paste ratio tracking
+
+**Service Health:**
+- Metrics endpoint availability
+- Stale metrics detection
+
+To use the alert rules, add to your Prometheus configuration:
+
+```yaml
+rule_files:
+  - 'prometheus-alerts.yml'
+```
+
+All alert thresholds can be customized based on your specific requirements and expected usage patterns.
+
 ### Grafana Dashboard
 
 ![Grafana Dashboard](grafana-dashboard-privatebin.png)
