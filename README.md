@@ -4,7 +4,7 @@ A secure Docker container running PrivateBin with Apache web server, featuring P
 
 ## Features
 
-- **Apache 2.4** with PHP 8.2 (Debian-based)
+- **Apache 2.4** with PHP 8.4 (Debian-based)
 - **PrivateBin** version 2.0.3
 - Optimized image size (~450-500MB)
 - Secure setup with sensitive directories outside document root (`/srv/privatebin`)
@@ -105,7 +105,8 @@ docker run -d -p 8080:80 \
 ### Apache Configuration
 
 The Apache configuration in `apache-config.conf` includes:
-- Security headers (CSP, X-Frame-Options, etc.)
+- Privacy-focused: Access logs disabled, error logs only for critical events
+- Server identity protection: Server tokens and signatures disabled
 - Access restrictions for data directory
 - URL rewriting support
 

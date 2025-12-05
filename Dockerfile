@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Install PHP extensions and download PrivateBin in a single layer
 ARG PRIVATEBIN_VERSION=2.0.3

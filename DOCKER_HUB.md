@@ -14,7 +14,7 @@ Access at: `http://localhost:8080`
 
 ## Features
 
-- **Apache 2.4** with PHP 8.2 (Debian-based)
+- **Apache 2.4** with PHP 8.4 (Debian-based)
 - **PrivateBin** version 2.0.3
 - **Prometheus metrics** endpoint at `/metrics`
 - Optimized image size (~450-500MB)
