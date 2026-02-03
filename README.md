@@ -1,6 +1,6 @@
 # PrivateBin Docker
 
-A secure Docker container running PrivateBin with Apache web server, featuring Prometheus metrics, data persistence, and optimized configuration for production deployments.
+A secure Docker container running PrivateBin with Apache web server, featuring Prometheus metrics, Grafana dashboard, data persistence, and optimized configuration for production deployments.
 
 ## Features
 
@@ -9,6 +9,7 @@ A secure Docker container running PrivateBin with Apache web server, featuring P
 - Optimized image size (~450-500MB)
 - Secure setup with sensitive directories outside document root (`/srv/privatebin`)
 - **Prometheus metrics** endpoint at `/metrics`
+- **Grafana** dashboard
 - Security headers configured
 - Data persistence with Docker volumes
 - Configuration and data mounted as volumes
