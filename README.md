@@ -1,3 +1,6 @@
+> [!NOTE]
+> 📦 **This project is no longer actively maintained.** No new features or fixes are planned, but the repository remains available for reference.
+
 # PrivateBin Docker
 
 A secure Docker container running PrivateBin with Apache web server, featuring Prometheus metrics, Grafana dashboard, data persistence, and optimized configuration for production deployments.
